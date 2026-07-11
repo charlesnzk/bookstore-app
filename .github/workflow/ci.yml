@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $SA_PASSWORD -Q 'SELECT 1' -No"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DEBUG: "True"
+      DB_NAME: bookstore_test
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_HOST: localhost
+      DB_PORT: "1433"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ODBC driver
+        run: |
+          curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | \
+            gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] \
+            https://packages.microsoft.com/debian/12/prod bookworm main" | \
+            sudo tee /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev
+
+      - name: Install Python dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install flake8 black
+
+      - name: Create test database
+        run: |
+          /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost -U sa -P "${{ secrets.DB_PASSWORD }}" \
+            -Q "CREATE DATABASE bookstore_test" -No
+
+      - name: Run migrations
+        run: |
+          cd backend
+          python manage.py migrate
+
+      - name: Lint with flake8
+        run: |
+          cd backend
+          flake8 . --max-line-length=88 --exclude=migrations,__pycache__
+
+      - name: Check formatting with black
+        run: |
+          cd backend
+          black . --check --exclude migrations
+
+      - name: Run tests
+        run: |
+          cd backend
+          python manage.py test
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Lint
+        run: |
+          cd frontend
+          npm run lint

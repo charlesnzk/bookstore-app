@@ -25,22 +25,22 @@ class Book(models.Model):
 
 class Order(models.Model):
     DELIVERY_CHOICES = [
-        ('standard', 'Standard'),
-        ('express', 'Express'),
-        ('pickup', 'Self Pickup'),
+        ("standard", "Standard"),
+        ("express", "Express"),
+        ("pickup", "Self Pickup"),
     ]
 
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
-        ('shipped', 'Shipped'),
-        ('delivered', 'Delivered'),
-        ('cancelled', 'Cancelled'),
+        ("pending", "Pending"),
+        ("confirmed", "Confirmed"),
+        ("shipped", "Shipped"),
+        ("delivered", "Delivered"),
+        ("cancelled", "Cancelled"),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
     delivery_method = models.CharField(max_length=20, choices=DELIVERY_CHOICES)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     date_submitted = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
 
@@ -49,7 +49,7 @@ class Order(models.Model):
 
 
 class OrderBook(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price_at_purchase = models.DecimalField(max_digits=10, decimal_places=2)
