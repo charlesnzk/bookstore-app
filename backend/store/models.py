@@ -1,6 +1,8 @@
-from django.db import models
+from decimal import Decimal
+
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator
+from django.db import models
 
 
 class User(AbstractUser):
@@ -17,7 +19,7 @@ class Book(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0.01)],
+        validators=[MinValueValidator(Decimal("0.01"))],
     )
     stock = models.PositiveIntegerField(default=0)
     availability = models.BooleanField(default=True, db_index=True)
@@ -29,6 +31,7 @@ class Book(models.Model):
         indexes = [
             models.Index(fields=["title", "availability"]),
         ]
+        ordering = ["title"]
 
     def __str__(self):
         return self.title
@@ -74,6 +77,7 @@ class Order(models.Model):
         indexes = [
             models.Index(fields=["user", "status"]),
         ]
+        ordering = ["-date_submitted"]
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
@@ -90,7 +94,7 @@ class OrderBook(models.Model):
     price_at_purchase = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0.01)],
+        validators=[MinValueValidator(Decimal("0.01"))],
     )
 
     def __str__(self):
