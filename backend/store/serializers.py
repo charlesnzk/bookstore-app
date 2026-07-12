@@ -92,9 +92,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class CreateOrderSerializer(serializers.Serializer):
     delivery_method = serializers.ChoiceField(choices=Order.DELIVERY_CHOICES)
-    items = serializers.ListField(
-        child=serializers.DictField(), min_length=1
-    )
+    items = serializers.ListField(child=serializers.DictField(), min_length=1)
 
     def validate_items(self, items):
         errors = []
@@ -108,3 +106,9 @@ class CreateOrderSerializer(serializers.Serializer):
         if errors:
             raise serializers.ValidationError(errors)
         return items
+
+
+class OrderStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ["status"]

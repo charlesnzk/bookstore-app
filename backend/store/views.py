@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Book, Order, OrderBook, User
+from .permissions import IsAdminUser
 from .serializers import (
     BookSerializer,
     CreateOrderSerializer,
     OrderSerializer,
+    OrderStatusSerializer,
     RegisterSerializer,
     UserSerializer,
 )
@@ -47,30 +49,24 @@ class BookDetailView(generics.RetrieveAPIView):
 
 class AdminBookListView(generics.ListCreateAPIView):
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
         return Book.objects.filter(is_deleted=False)
 
     def perform_create(self, serializer):
-        if not self.request.user.is_admin:
-            raise permissions.PermissionDenied
         serializer.save()
 
 
 class AdminBookDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BookSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
     queryset = Book.objects.filter(is_deleted=False)
 
     def perform_update(self, serializer):
-        if not self.request.user.is_admin:
-            raise permissions.PermissionDenied
         serializer.save()
 
     def perform_destroy(self, instance):
-        if not self.request.user.is_admin:
-            raise permissions.PermissionDenied
         instance.soft_delete()
 
 
@@ -141,32 +137,26 @@ class CreateOrderView(APIView):
 
 class AdminOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get_queryset(self):
-        if not self.request.user.is_admin:
-            raise permissions.PermissionDenied
-        return Order.objects.all().prefetch_related("items__book")
+        queryset = Order.objects.all().prefetch_related("items__book")
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        return queryset
 
 
 class AdminOrderUpdateView(generics.UpdateAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = OrderStatusSerializer
+    permission_classes = [IsAdminUser]
     queryset = Order.objects.all()
-
-    def perform_update(self, serializer):
-        if not self.request.user.is_admin:
-            raise permissions.PermissionDenied
-        serializer.save()
 
 
 class AdminStatsView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
-        if not self.request.user.is_admin:
-            raise permissions.PermissionDenied
-
         total_orders = Order.objects.count()
         total_books = Book.objects.filter(is_deleted=False).count()
         orders_by_status = {}
