@@ -1,16 +1,35 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, Book, Order, OrderBook
+
+from .models import Book, Order, OrderBook, User
+
+
+class BookAdminForm(forms.ModelForm):
+    class Meta:
+        model = Book
+        fields = "__all__"
+
+    def clean_isbn(self):
+        isbn = self.cleaned_data.get("isbn", "")
+        if not isbn.isdigit():
+            raise forms.ValidationError("ISBN must contain only digits.")
+        if len(isbn) not in [10, 13]:
+            raise forms.ValidationError("ISBN must be 10 or 13 digits.")
+        return isbn
 
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     list_display = ["username", "email", "is_admin", "is_staff"]
-    fieldsets = UserAdmin.fieldsets + (("Role", {"fields": ("is_admin",)}),)
+    fieldsets = UserAdmin.fieldsets + (
+        ("Role", {"fields": ("is_admin",)}),
+    )
 
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
+    form = BookAdminForm
     list_display = ["title", "isbn", "price", "stock", "availability"]
     search_fields = ["title", "isbn"]
 

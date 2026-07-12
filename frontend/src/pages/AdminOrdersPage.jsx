@@ -33,7 +33,9 @@ export default function AdminOrdersPage() {
   const [filter, setFilter] = useState("");
 
   const fetchOrders = async (status = "") => {
-    const res = await api.get(`/admin/orders/${status ? `?status=${status}` : ""}`);
+    const res = await api.get(
+      `/admin/orders/${status ? `?status=${status}` : ""}`
+    );
     setOrders(res.data.results || []);
   };
 
@@ -47,7 +49,10 @@ export default function AdminOrdersPage() {
       notifications.show({ message: "Order status updated.", color: "green" });
       fetchOrders(filter);
     } catch {
-      notifications.show({ message: "Failed to update status.", color: "red" });
+      notifications.show({
+        message: "Failed to update status.",
+        color: "red",
+      });
     }
   };
 
@@ -68,7 +73,7 @@ export default function AdminOrdersPage() {
       {orders.length === 0 ? (
         <Text c="dimmed">No orders found.</Text>
       ) : (
-        <Accordion>
+        <Accordion multiple>
           {orders.map((order) => (
             <Accordion.Item key={order.id} value={String(order.id)}>
               <Accordion.Control>
@@ -88,7 +93,8 @@ export default function AdminOrdersPage() {
                     <Table.Tr>
                       <Table.Th>Book</Table.Th>
                       <Table.Th>Qty</Table.Th>
-                      <Table.Th>Price</Table.Th>
+                      <Table.Th>Unit Price</Table.Th>
+                      <Table.Th>Total</Table.Th>
                     </Table.Tr>
                   </Table.Thead>
                   <Table.Tbody>
@@ -97,6 +103,12 @@ export default function AdminOrdersPage() {
                         <Table.Td>{item.book_title}</Table.Td>
                         <Table.Td>{item.quantity}</Table.Td>
                         <Table.Td>${item.price_at_purchase}</Table.Td>
+                        <Table.Td>
+                          ${(
+                            item.quantity *
+                            parseFloat(item.price_at_purchase)
+                          ).toFixed(2)}
+                        </Table.Td>
                       </Table.Tr>
                     ))}
                   </Table.Tbody>

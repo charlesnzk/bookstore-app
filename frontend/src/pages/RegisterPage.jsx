@@ -9,11 +9,13 @@ import {
   Anchor,
 } from "@mantine/core";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { notifications } from "@mantine/notifications";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 
 export default function RegisterPage() {
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
@@ -21,11 +23,14 @@ export default function RegisterPage() {
     password: "",
     password2: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  if (loading) return null;
+  if (user) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     try {
       await api.post("/register/", form);
       notifications.show({
@@ -40,7 +45,7 @@ export default function RegisterPage() {
         : "Registration failed.";
       notifications.show({ message, color: "red" });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -79,7 +84,7 @@ export default function RegisterPage() {
             value={form.password2}
             onChange={(e) => setForm({ ...form, password2: e.target.value })}
           />
-          <Button type="submit" fullWidth loading={loading}>
+          <Button type="submit" fullWidth loading={submitting}>
             Create account
           </Button>
         </form>

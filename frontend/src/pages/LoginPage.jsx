@@ -9,27 +9,33 @@ import {
   Anchor,
 } from "@mantine/core";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  if (loading) return null;
+  if (user) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     try {
-      const user = await login(form.username, form.password);
+      const loggedInUser = await login(form.username, form.password);
       notifications.show({ message: "Welcome back!", color: "green" });
-      navigate(user.is_admin ? "/admin/books" : "/");
+      navigate(loggedInUser.is_admin ? "/admin/books" : "/");
     } catch {
-      notifications.show({ message: "Invalid username or password.", color: "red" });
+      notifications.show({
+        message: "Invalid username or password.",
+        color: "red",
+      });
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -54,7 +60,7 @@ export default function LoginPage() {
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
-          <Button type="submit" fullWidth loading={loading}>
+          <Button type="submit" fullWidth loading={submitting}>
             Sign in
           </Button>
         </form>

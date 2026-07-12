@@ -9,7 +9,6 @@ from .serializers import (
     BookSerializer,
     CreateOrderSerializer,
     OrderSerializer,
-    OrderStatusSerializer,
     RegisterSerializer,
     UserSerializer,
 )
@@ -135,6 +134,37 @@ class CreateOrderView(APIView):
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
 
+class CancelOrderView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            order = Order.objects.get(pk=pk, user=request.user)
+        except Order.DoesNotExist:
+            return Response(
+                {"error": "Order not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if order.status != "pending":
+            return Response(
+                {"error": "Only pending orders can be cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            order.status = "cancelled"
+            order.save()
+            for item in order.items.all():
+                book = Book.objects.select_for_update().get(pk=item.book.pk)
+                book.stock += item.quantity
+                if book.stock > 0:
+                    book.availability = True
+                book.save()
+
+        return Response(OrderSerializer(order).data)
+
+
 class AdminOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAdminUser]
@@ -147,10 +177,51 @@ class AdminOrderListView(generics.ListAPIView):
         return queryset
 
 
-class AdminOrderUpdateView(generics.UpdateAPIView):
-    serializer_class = OrderStatusSerializer
+class AdminOrderUpdateView(APIView):
     permission_classes = [IsAdminUser]
-    queryset = Order.objects.all()
+
+    def patch(self, request, pk):
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response(
+                {"error": "Order not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        new_status = request.data.get("status")
+        if not new_status:
+            return Response(
+                {"error": "Status is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        valid_statuses = [s[0] for s in Order.STATUS_CHOICES]
+        if new_status not in valid_statuses:
+            return Response(
+                {"error": f"Invalid status. Choose from: {valid_statuses}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if order.status == "cancelled":
+            return Response(
+                {"error": "Cannot update a cancelled order."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            if new_status == "cancelled" and order.status != "cancelled":
+                for item in order.items.all():
+                    book = Book.objects.select_for_update().get(pk=item.book.pk)
+                    book.stock += item.quantity
+                    if book.stock > 0:
+                        book.availability = True
+                    book.save()
+
+            order.status = new_status
+            order.save()
+
+        return Response(OrderSerializer(order).data)
 
 
 class AdminStatsView(APIView):

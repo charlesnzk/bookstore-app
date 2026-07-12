@@ -433,6 +433,80 @@ class OrderTests(TestCase):
         response = self.client.get("/api/admin/orders/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_customer_can_cancel_pending_order(self):
+        self.client.post(
+            "/api/orders/create/",
+            {
+                "delivery_method": "standard",
+                "items": [{"book_id": self.book.id, "quantity": 1}],
+            },
+            format="json",
+        )
+        order = Order.objects.first()
+        response = self.client.post(f"/api/orders/{order.id}/cancel/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        order.refresh_from_db()
+        self.assertEqual(order.status, "cancelled")
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock, 5)
+
+    def test_customer_cannot_cancel_confirmed_order(self):
+        self.client.post(
+            "/api/orders/create/",
+            {
+                "delivery_method": "standard",
+                "items": [{"book_id": self.book.id, "quantity": 1}],
+            },
+            format="json",
+        )
+        order = Order.objects.first()
+        order.status = "confirmed"
+        order.save()
+        response = self.client.post(f"/api/orders/{order.id}/cancel/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_admin_cancel_restores_stock(self):
+        self.client.post(
+            "/api/orders/create/",
+            {
+                "delivery_method": "standard",
+                "items": [{"book_id": self.book.id, "quantity": 2}],
+            },
+            format="json",
+        )
+        order = Order.objects.first()
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f"/api/admin/orders/{order.id}/",
+            {"status": "cancelled"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        order.refresh_from_db()
+        self.assertEqual(order.status, "cancelled")
+        self.book.refresh_from_db()
+        self.assertEqual(self.book.stock, 5)
+
+    def test_admin_cannot_update_cancelled_order(self):
+        self.client.post(
+            "/api/orders/create/",
+            {
+                "delivery_method": "standard",
+                "items": [{"book_id": self.book.id, "quantity": 1}],
+            },
+            format="json",
+        )
+        order = Order.objects.first()
+        order.status = "cancelled"
+        order.save()
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f"/api/admin/orders/{order.id}/",
+            {"status": "confirmed"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class AdminStatsTests(TestCase):
     def setUp(self):

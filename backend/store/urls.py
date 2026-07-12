@@ -8,6 +8,7 @@ from .views import (
     AdminStatsView,
     BookDetailView,
     BookListView,
+    CancelOrderView,
     CreateOrderView,
     OrderListView,
     ProfileView,
@@ -24,6 +25,7 @@ urlpatterns = [
     # orders - customer
     path("orders/", OrderListView.as_view()),
     path("orders/create/", CreateOrderView.as_view()),
+    path("orders/<int:pk>/cancel/", CancelOrderView.as_view()),
     # admin
     path("admin/books/", AdminBookListView.as_view()),
     path("admin/books/<int:pk>/", AdminBookDetailView.as_view()),
