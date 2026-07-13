@@ -27,6 +27,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     ports:
       - "8000:8000"
     volumes:

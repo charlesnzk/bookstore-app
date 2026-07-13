@@ -12,7 +12,7 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <MantineProvider>
-        <Notifications />
+        <Notifications position="bottom-left" />
         <AuthProvider>
           <App />
         </AuthProvider>

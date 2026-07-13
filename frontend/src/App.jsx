@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import Chatbot from "./components/Chatbot";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import BookCataloguePage from "./pages/BookCataloguePage";
@@ -10,6 +12,8 @@ import AdminOrdersPage from "./pages/AdminOrdersPage";
 import AdminStatsPage from "./pages/AdminStatsPage";
 
 export default function App() {
+  const { user } = useAuth();
+
   return (
     <>
       <Navbar />
@@ -58,6 +62,7 @@ export default function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      {user && !user.is_admin && <Chatbot />}
     </>
   );
 }

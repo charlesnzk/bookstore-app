@@ -1,4 +1,7 @@
+from decouple import config
 from django.db import transaction
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -243,3 +246,60 @@ class AdminStatsView(APIView):
                 "orders_by_status": orders_by_status,
             }
         )
+
+
+class ChatbotView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        message = request.data.get("message", "").strip()
+        if not message:
+            return Response(
+                {"error": "Message is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        system_prompt = """You are a customer support assistant for an online \
+            bookstore. Answer questions about the following topics only:
+
+            Delivery options:
+            - Standard: 3-5 business days
+            - Express: 1-2 business days
+            - Self pickup: same day
+
+            Supported countries: Singapore, Malaysia, Indonesia, Thailand, Philippines.
+
+            Order statuses:
+            - Pending: order received, not yet processed
+            - Confirmed: being processed
+            - Shipped: on the way
+            - Delivered: received by customer
+
+            Cancellations: customers can cancel pending orders only. Once confirmed, \
+            cancellation is not possible.
+
+            Returns: not supported at this time.
+
+            Payment: major credit and debit cards accepted.
+
+            Keep replies short and friendly. If the question is unrelated to the \
+            bookstore, say you can only help with bookstore queries."""
+
+        try:
+            llm = ChatOpenAI(
+                model="gpt-3.5-turbo",
+                temperature=0.7,
+                api_key=config("OPENAI_API_KEY", default=""),
+            )
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=message),
+            ]
+            response = llm.invoke(messages)
+            return Response({"reply": response.content})
+
+        except Exception:
+            return Response(
+                {"error": "Chatbot unavailable. Please try again later."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
