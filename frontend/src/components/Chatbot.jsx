@@ -161,8 +161,14 @@ export default function Chatbot() {
           onKeyDown={handleKeyDown}
           size="sm"
         />
-        <Button size="sm" onClick={handleSend} loading={loading}>
-          Send
+        <Button
+            size="sm"
+            onClick={handleSend}
+            loading={loading}
+            disabled={!input.trim()}
+            aria-label="Send message"
+        >
+            Send
         </Button>
       </Group>
     </Paper>

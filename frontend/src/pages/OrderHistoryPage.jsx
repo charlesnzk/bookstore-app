@@ -9,27 +9,11 @@ import {
   Group,
   Center,
   Loader,
-  ThemeIcon,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { notifications } from "@mantine/notifications";
 import api from "../api/axios";
-
-const STATUS_COLORS = {
-  pending: "yellow",
-  confirmed: "blue",
-  shipped: "indigo",
-  delivered: "green",
-  cancelled: "red",
-};
-
-const STATUS_ICONS = {
-  pending: "⏳",
-  confirmed: "✅",
-  shipped: "🚚",
-  delivered: "📦",
-  cancelled: "❌",
-};
+import { STATUS_COLORS, STATUS_ICONS } from "../constants";
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
@@ -81,10 +65,7 @@ export default function OrderHistoryPage() {
             <Text c="dimmed">You have no orders yet.</Text>
           </Center>
         ) : (
-          <Accordion
-            multiple
-            aria-label="Order history"
-          >
+          <Accordion multiple aria-label="Order history">
             {orders.map((order) => (
               <Accordion.Item key={order.id} value={String(order.id)}>
                 <Accordion.Control

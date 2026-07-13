@@ -20,12 +20,7 @@ import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
-
-const DELIVERY_OPTIONS = [
-  { value: "standard", label: "Standard (3-5 days)" },
-  { value: "express", label: "Express (1-2 days)" },
-  { value: "pickup", label: "Self Pickup (same day)" },
-];
+import { DELIVERY_OPTIONS } from "../constants";
 
 export default function BookCataloguePage() {
   const { user } = useAuth();
@@ -223,7 +218,11 @@ export default function BookCataloguePage() {
                           </Badge>
                         </Group>
                         {!user?.is_admin && (
-                          <Button fullWidth disabled aria-label={`${book.title} is out of stock`}>
+                          <Button
+                            fullWidth
+                            disabled
+                            aria-label={`${book.title} is out of stock`}
+                          >
                             Out of stock
                           </Button>
                         )}

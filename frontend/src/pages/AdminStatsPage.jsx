@@ -14,22 +14,7 @@ import {
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 import { notifications } from "@mantine/notifications";
-
-const STATUS_COLORS = {
-  pending: "yellow",
-  confirmed: "blue",
-  shipped: "indigo",
-  delivered: "green",
-  cancelled: "red",
-};
-
-const STATUS_ICONS = {
-  pending: "⏳",
-  confirmed: "✅",
-  shipped: "🚚",
-  delivered: "📦",
-  cancelled: "❌",
-};
+import { STATUS_COLORS, STATUS_ICONS } from "../constants";
 
 const DELIVERY_LABELS = {
   standard: "Standard",
@@ -115,7 +100,11 @@ export default function AdminStatsPage() {
               {stats.total_customers}
             </Text>
           </Card>
-          <Card withBorder radius="md" aria-label="Total revenue from delivered orders">
+          <Card
+            withBorder
+            radius="md"
+            aria-label="Revenue from delivered orders"
+          >
             <Text size="sm" c="dimmed" mb="xs">
               Revenue (delivered orders)
             </Text>
@@ -160,14 +149,19 @@ export default function AdminStatsPage() {
             <Text fw={600} mb="md">
               Orders by delivery method
             </Text>
-            {Object.entries(stats.orders_by_delivery).map(([method, count]) => (
-              <Group key={method} justify="space-between" py="xs">
-                <Text size="sm">{DELIVERY_LABELS[method]}</Text>
-                <Badge variant="light" aria-label={`${count} ${method} orders`}>
-                  {count}
-                </Badge>
-              </Group>
-            ))}
+            {Object.entries(stats.orders_by_delivery).map(
+              ([method, count]) => (
+                <Group key={method} justify="space-between" py="xs">
+                  <Text size="sm">{DELIVERY_LABELS[method]}</Text>
+                  <Badge
+                    variant="light"
+                    aria-label={`${count} ${method} orders`}
+                  >
+                    {count}
+                  </Badge>
+                </Group>
+              )
+            )}
           </Card>
         </SimpleGrid>
       </Container>

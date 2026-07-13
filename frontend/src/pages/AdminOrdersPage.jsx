@@ -13,30 +13,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-
-const STATUS_COLORS = {
-  pending: "yellow",
-  confirmed: "blue",
-  shipped: "indigo",
-  delivered: "green",
-  cancelled: "red",
-};
-
-const STATUS_ICONS = {
-  pending: "⏳",
-  confirmed: "✅",
-  shipped: "🚚",
-  delivered: "📦",
-  cancelled: "❌",
-};
-
-const STATUS_OPTIONS = [
-  { value: "pending", label: "Pending" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "shipped", label: "Shipped" },
-  { value: "delivered", label: "Delivered" },
-  { value: "cancelled", label: "Cancelled" },
-];
+import { STATUS_COLORS, STATUS_ICONS, STATUS_OPTIONS } from "../constants";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -66,8 +43,7 @@ export default function AdminOrdersPage() {
       notifications.show({ message: "Order status updated.", color: "green" });
       fetchOrders(filter);
     } catch (err) {
-      const msg =
-        err.response?.data?.error || "Failed to update status.";
+      const msg = err.response?.data?.error || "Failed to update status.";
       notifications.show({ message: msg, color: "red" });
     }
   };

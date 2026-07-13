@@ -1,5 +1,6 @@
 from decouple import config
 from django.db import transaction
+from django.db.models import Sum, F
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from rest_framework import generics, permissions, status
@@ -236,7 +237,6 @@ class AdminStatsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        from django.db.models import Sum, F
 
         total_orders = Order.objects.count()
         total_books = Book.objects.filter(is_deleted=False).count()
