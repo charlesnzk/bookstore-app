@@ -238,6 +238,16 @@ class BookTests(TestCase):
         response = self.client.get("/api/books/")
         self.assertEqual(response.data["count"], 0)
 
+    def test_stock_zero_sets_unavailable(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(
+            f"/api/admin/books/{self.book.id}/",
+            {"stock": 0},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.book.refresh_from_db()
+        self.assertFalse(self.book.availability)
+
 
 class OrderTests(TestCase):
     def setUp(self):
@@ -531,7 +541,12 @@ class AdminStatsTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("total_orders", response.data)
         self.assertIn("total_books", response.data)
+        self.assertIn("total_customers", response.data)
+        self.assertIn("total_revenue", response.data)
         self.assertIn("orders_by_status", response.data)
+        self.assertIn("orders_by_delivery", response.data)
+        self.assertIn("low_stock_books", response.data)
+        self.assertIn("out_of_stock_books", response.data)
 
     def test_stats_reflect_correct_counts(self):
         self.client.force_authenticate(user=self.customer)

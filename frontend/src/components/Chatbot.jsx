@@ -15,7 +15,7 @@ import api from "../api/axios";
 
 const INITIAL_MESSAGE = {
   role: "bot",
-  text: "Hey! Got questions about delivery, orders or where we ship to? I can help.",
+  text: "Hi! Got any questions about delivery, orders or where we ship to? Please let me know.",
 };
 
 export default function Chatbot() {
@@ -73,6 +73,7 @@ export default function Chatbot() {
           borderRadius: "50px",
         }}
         onClick={() => setOpen(true)}
+        aria-label="Open support chat"
       >
         💬 Support Chat
       </Button>
@@ -103,12 +104,22 @@ export default function Chatbot() {
         <Text fw={600} size="sm">
           Support
         </Text>
-        <ActionIcon variant="subtle" onClick={() => setOpen(false)}>
-          ✕
+        <ActionIcon
+            variant="subtle"
+            onClick={() => setOpen(false)}
+            aria-label="Close chat"
+        >
+            ✕
         </ActionIcon>
       </Group>
 
-      <ScrollArea flex={1} p="sm" viewportRef={viewport}>
+      <ScrollArea
+        flex={1}
+        p="sm"
+        viewportRef={viewport}
+        aria-live="polite"
+        aria-label="Chat messages"
+        >
         <Stack gap="xs">
           {messages.map((msg, i) => (
             <div

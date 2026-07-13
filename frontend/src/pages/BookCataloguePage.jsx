@@ -11,24 +11,44 @@ import {
   NumberInput,
   Modal,
   Select,
+  Loader,
+  Center,
+  Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
+
+const DELIVERY_OPTIONS = [
+  { value: "standard", label: "Standard (3-5 days)" },
+  { value: "express", label: "Express (1-2 days)" },
+  { value: "pickup", label: "Self Pickup (same day)" },
+];
 
 export default function BookCataloguePage() {
+  const { user } = useAuth();
   const [books, setBooks] = useState([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [delivery, setDelivery] = useState("standard");
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [total, setTotal] = useState(0);
   const [opened, { open, close }] = useDisclosure(false);
 
   const fetchBooks = async (q = "") => {
-    const res = await api.get(`/books/${q ? `?search=${q}` : ""}`);
-    setBooks(res.data.results || []);
+    try {
+      const res = await api.get(`/books/${q ? `?search=${q}` : ""}`);
+      setBooks(res.data.results || []);
+      setTotal(res.data.count || 0);
+    } catch {
+      notifications.show({ message: "Failed to load books.", color: "red" });
+    } finally {
+      setPageLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -53,7 +73,10 @@ export default function BookCataloguePage() {
         delivery_method: delivery,
         items: [{ book_id: selected.id, quantity }],
       });
-      notifications.show({ message: "Order placed successfully!", color: "green" });
+      notifications.show({
+        message: "Order placed successfully!",
+        color: "green",
+      });
       close();
       fetchBooks(search);
     } catch (err) {
@@ -64,78 +87,189 @@ export default function BookCataloguePage() {
     }
   };
 
-  return (
-    <Container size="xl">
-      <Title mb="md">Book Catalogue</Title>
-      <TextInput
-        placeholder="Search books..."
-        mb="lg"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      <Grid>
-        {books.map((book) => (
-          <Grid.Col key={book.id} span={{ base: 12, sm: 6, md: 4, lg: 3 }}>
-            <Card withBorder radius="md" h="100%">
-              <Text fw={600} mb="xs" lineClamp={2}>
-                {book.title}
-              </Text>
-              <Text size="sm" c="dimmed" mb="xs">
-                ISBN: {book.isbn}
-              </Text>
-              <Text size="sm" mb="sm" lineClamp={3}>
-                {book.description || "No description available."}
-              </Text>
-              <Group justify="space-between" mt="auto">
-                <Text fw={700}>${book.price}</Text>
-                <Badge color={book.availability ? "green" : "red"}>
-                  {book.availability ? `${book.stock} left` : "Out of stock"}
-                </Badge>
-              </Group>
-              <Button
-                fullWidth
-                mt="sm"
-                disabled={!book.availability}
-                onClick={() => handleBuy(book)}
-              >
-                Buy
-              </Button>
-            </Card>
-          </Grid.Col>
-        ))}
-        {books.length === 0 && (
-          <Grid.Col span={12}>
-            <Text ta="center" c="dimmed">
-              No books found.
-            </Text>
-          </Grid.Col>
-        )}
-      </Grid>
+  if (pageLoading) {
+    return (
+      <Center h={400}>
+        <Loader aria-label="Loading books" />
+      </Center>
+    );
+  }
 
-      <Modal opened={opened} onClose={close} title={`Buy: ${selected?.title}`}>
-        <NumberInput
-          label="Quantity"
-          min={1}
-          max={selected?.stock}
-          value={quantity}
-          onChange={setQuantity}
-          mb="sm"
+  const availableBooks = books.filter((b) => b.availability);
+  const unavailableBooks = books.filter((b) => !b.availability);
+
+  return (
+    <main>
+      <Container size="xl" py="md">
+        <Group justify="space-between" mb="md">
+          <Title order={1}>Book Catalogue</Title>
+          <Text c="dimmed" size="sm">
+            {total} {total === 1 ? "book" : "books"} total
+          </Text>
+        </Group>
+        <TextInput
+          placeholder="Search by title..."
+          mb="lg"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search books by title"
         />
-        <Select
-          label="Delivery method"
-          mb="md"
-          value={delivery}
-          onChange={setDelivery}
-          data={[
-            { value: "standard", label: "Standard" },
-            { value: "express", label: "Express" },
-            { value: "pickup", label: "Self Pickup" },
-          ]}
-        />
-        <Button fullWidth loading={loading} onClick={handleOrder}>
-          Confirm order
-        </Button>
-      </Modal>
-    </Container>
+
+        {books.length === 0 ? (
+          <Center h={200}>
+            <Stack align="center">
+              <Text c="dimmed">No books found.</Text>
+              {search && (
+                <Button variant="subtle" onClick={() => setSearch("")}>
+                  Clear search
+                </Button>
+              )}
+            </Stack>
+          </Center>
+        ) : (
+          <>
+            {availableBooks.length > 0 && (
+              <>
+                <Text fw={600} mb="sm">
+                  Available ({availableBooks.length})
+                </Text>
+                <Grid mb="xl">
+                  {availableBooks.map((book) => (
+                    <Grid.Col
+                      key={book.id}
+                      span={{ base: 12, sm: 6, md: 4, lg: 3 }}
+                    >
+                      <Card
+                        withBorder
+                        radius="md"
+                        h="100%"
+                        style={{ display: "flex", flexDirection: "column" }}
+                        aria-label={`${book.title}, ISBN ${book.isbn}`}
+                      >
+                        <Text fw={600} mb="xs" lineClamp={2} size="md">
+                          {book.title}
+                        </Text>
+                        <Text size="xs" c="dimmed" mb="xs">
+                          ISBN: {book.isbn}
+                        </Text>
+                        <Text size="sm" mb="sm" lineClamp={3} c="dimmed">
+                          {book.description || "No description available."}
+                        </Text>
+                        <Group justify="space-between" mt="auto" mb="sm">
+                          <Text fw={700} size="lg">
+                            ${book.price}
+                          </Text>
+                          <Badge
+                            color="green"
+                            variant="light"
+                            aria-label={`${book.stock} copies in stock`}
+                          >
+                            {book.stock} left
+                          </Badge>
+                        </Group>
+                        {!user?.is_admin && (
+                          <Button
+                            fullWidth
+                            onClick={() => handleBuy(book)}
+                            aria-label={`Buy ${book.title}`}
+                          >
+                            Buy
+                          </Button>
+                        )}
+                      </Card>
+                    </Grid.Col>
+                  ))}
+                </Grid>
+              </>
+            )}
+
+            {unavailableBooks.length > 0 && (
+              <>
+                <Text fw={600} mb="sm" c="dimmed">
+                  Out of stock ({unavailableBooks.length})
+                </Text>
+                <Grid>
+                  {unavailableBooks.map((book) => (
+                    <Grid.Col
+                      key={book.id}
+                      span={{ base: 12, sm: 6, md: 4, lg: 3 }}
+                    >
+                      <Card
+                        withBorder
+                        radius="md"
+                        h="100%"
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          opacity: 0.6,
+                        }}
+                        aria-label={`${book.title}, out of stock`}
+                      >
+                        <Text fw={600} mb="xs" lineClamp={2} size="md">
+                          {book.title}
+                        </Text>
+                        <Text size="xs" c="dimmed" mb="xs">
+                          ISBN: {book.isbn}
+                        </Text>
+                        <Text size="sm" mb="sm" lineClamp={3} c="dimmed">
+                          {book.description || "No description available."}
+                        </Text>
+                        <Group justify="space-between" mt="auto" mb="sm">
+                          <Text fw={700} size="lg">
+                            ${book.price}
+                          </Text>
+                          <Badge color="red" variant="light">
+                            Out of stock
+                          </Badge>
+                        </Group>
+                        {!user?.is_admin && (
+                          <Button fullWidth disabled aria-label={`${book.title} is out of stock`}>
+                            Out of stock
+                          </Button>
+                        )}
+                      </Card>
+                    </Grid.Col>
+                  ))}
+                </Grid>
+              </>
+            )}
+          </>
+        )}
+
+        <Modal
+          opened={opened}
+          onClose={close}
+          title={`Order: ${selected?.title}`}
+          aria-label="Place order"
+        >
+          <Text size="sm" c="dimmed" mb="sm">
+            Price: ${selected?.price} per copy
+          </Text>
+          <NumberInput
+            label="Quantity"
+            min={1}
+            max={selected?.stock}
+            value={quantity}
+            onChange={setQuantity}
+            mb="sm"
+            aria-label="Select quantity"
+          />
+          <Text size="xs" c="dimmed" mb="sm">
+            Total: ${(quantity * parseFloat(selected?.price || 0)).toFixed(2)}
+          </Text>
+          <Select
+            label="Delivery method"
+            mb="md"
+            value={delivery}
+            onChange={setDelivery}
+            data={DELIVERY_OPTIONS}
+            aria-label="Select delivery method"
+          />
+          <Button fullWidth loading={loading} onClick={handleOrder}>
+            Confirm order
+          </Button>
+        </Modal>
+      </Container>
+    </main>
   );
 }

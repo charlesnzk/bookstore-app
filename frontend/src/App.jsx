@@ -10,6 +10,7 @@ import OrderHistoryPage from "./pages/OrderHistoryPage";
 import AdminBooksPage from "./pages/AdminBooksPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
 import AdminStatsPage from "./pages/AdminStatsPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 export default function App() {
   const { user } = useAuth();
@@ -60,7 +61,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       {user && !user.is_admin && <Chatbot />}
     </>

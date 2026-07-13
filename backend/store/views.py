@@ -66,7 +66,12 @@ class AdminBookDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Book.objects.filter(is_deleted=False)
 
     def perform_update(self, serializer):
-        serializer.save()
+        instance = serializer.save()
+        if instance.stock == 0:
+            instance.availability = False
+            instance.save()
+        elif instance.stock > 0 and not instance.availability:
+            pass
 
     def perform_destroy(self, instance):
         instance.soft_delete()
@@ -231,19 +236,47 @@ class AdminStatsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
+        from django.db.models import Sum, F
+
         total_orders = Order.objects.count()
         total_books = Book.objects.filter(is_deleted=False).count()
+        total_customers = User.objects.filter(is_admin=False).count()
+        low_stock_books = Book.objects.filter(
+            is_deleted=False, stock__lte=3, availability=True
+        ).count()
+        out_of_stock_books = Book.objects.filter(
+            is_deleted=False, availability=False
+        ).count()
+        total_revenue = (
+            OrderBook.objects.filter(
+                order__status="delivered"
+            ).aggregate(
+                revenue=Sum(F("price_at_purchase") * F("quantity"))
+            )["revenue"]
+            or 0
+        )
         orders_by_status = {}
         for choice in Order.STATUS_CHOICES:
             orders_by_status[choice[0]] = Order.objects.filter(
                 status=choice[0]
             ).count()
 
+        orders_by_delivery = {}
+        for choice in Order.DELIVERY_CHOICES:
+            orders_by_delivery[choice[0]] = Order.objects.filter(
+                delivery_method=choice[0]
+            ).count()
+
         return Response(
             {
                 "total_orders": total_orders,
                 "total_books": total_books,
+                "total_customers": total_customers,
+                "low_stock_books": low_stock_books,
+                "out_of_stock_books": out_of_stock_books,
+                "total_revenue": float(total_revenue),
                 "orders_by_status": orders_by_status,
+                "orders_by_delivery": orders_by_delivery,
             }
         )
 
