@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/useAuth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Chatbot from "./components/Chatbot";

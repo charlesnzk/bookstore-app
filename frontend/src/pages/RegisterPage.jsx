@@ -11,7 +11,7 @@ import {
 import { useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { notifications } from "@mantine/notifications";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import api from "../api/axios";
 
 export default function RegisterPage() {

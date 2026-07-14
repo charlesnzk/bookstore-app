@@ -19,7 +19,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useEffect, useState } from "react";
 import api from "../api/axios";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import { DELIVERY_OPTIONS } from "../constants";
 
 export default function BookCataloguePage() {
