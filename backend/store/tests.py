@@ -85,9 +85,7 @@ class AuthTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_profile_returns_user_data(self):
-        user = User.objects.create_user(
-            username="testuser", password="TestPass123!"
-        )
+        user = User.objects.create_user(username="testuser", password="TestPass123!")
         self.client.force_authenticate(user=user)
         response = self.client.get("/api/profile/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -83,9 +83,8 @@ class OrderListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return (
-            Order.objects.filter(user=self.request.user)
-            .prefetch_related("items__book")
+        return Order.objects.filter(user=self.request.user).prefetch_related(
+            "items__book"
         )
 
 
@@ -248,18 +247,14 @@ class AdminStatsView(APIView):
             is_deleted=False, availability=False
         ).count()
         total_revenue = (
-            OrderBook.objects.filter(
-                order__status="delivered"
-            ).aggregate(
+            OrderBook.objects.filter(order__status="delivered").aggregate(
                 revenue=Sum(F("price_at_purchase") * F("quantity"))
             )["revenue"]
             or 0
         )
         orders_by_status = {}
         for choice in Order.STATUS_CHOICES:
-            orders_by_status[choice[0]] = Order.objects.filter(
-                status=choice[0]
-            ).count()
+            orders_by_status[choice[0]] = Order.objects.filter(status=choice[0]).count()
 
         orders_by_delivery = {}
         for choice in Order.DELIVERY_CHOICES:

@@ -22,9 +22,7 @@ class BookAdminForm(forms.ModelForm):
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     list_display = ["username", "email", "is_admin", "is_staff"]
-    fieldsets = UserAdmin.fieldsets + (
-        ("Role", {"fields": ("is_admin",)}),
-    )
+    fieldsets = UserAdmin.fieldsets + (("Role", {"fields": ("is_admin",)}),)
 
 
 @admin.register(Book)

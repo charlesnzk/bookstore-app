@@ -1,4 +1,4 @@
-import { Group, Button, Container, Text, Avatar } from "@mantine/core";
+import { Group, Button, Container, Text } from "@mantine/core";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 

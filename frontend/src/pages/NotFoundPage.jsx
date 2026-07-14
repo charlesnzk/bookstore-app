@@ -1,4 +1,4 @@
-import { Container, Title, Text, Button, Center, Stack } from "@mantine/core";
+import { Title, Text, Button, Center, Stack } from "@mantine/core";
 import { Link } from "react-router-dom";
 
 export default function NotFoundPage() {
