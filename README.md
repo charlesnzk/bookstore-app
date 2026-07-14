@@ -71,5 +71,5 @@ docker compose exec backend python manage.py seed
 
 ## Docs
 
-- [NOTES.md](NOTES.md), how it is built, the data model, API reference, and the reasoning behind decisions
+- [NOTES.md](NOTES.md), how the program is built, the data model, API reference, and the reasoning behind decisions
 - [USERGUIDE.md](USERGUIDE.md), what the app does, from a user perspective
