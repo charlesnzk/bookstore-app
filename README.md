@@ -17,7 +17,7 @@ A bookstore app with separate admin and customer flows. Django/DRF on the backen
 You will need Docker Desktop. An OpenAI key is optional, the app works fine without it, you just will not get chatbot replies.
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/bookstore-app.git
+git clone https://github.com/charlesnzk/bookstore-app.git
 cd bookstore-app
 cp .env.example .env
 ```
@@ -28,7 +28,15 @@ Fill in .env (see below), then:
 docker compose up --build
 ```
 
-First run takes a few minutes since it is pulling the MSSQL image and installing everything. Once it is up, open a second terminal and run migrations plus seed data:
+First run takes a few minutes since it is pulling the MSSQL image and installing everything. 
+
+```bash
+docker compose exec db /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Password123" -Q "CREATE DATABASE bookstore" -C
+```
+
+Replace YourStrong!Password123 with the value you set in .env.
+
+Once it is up, open a second terminal and run migrations plus seed data:
 
 ```bash
 docker compose exec backend python manage.py migrate
